@@ -3,6 +3,8 @@ import numpy as np
 import math
 from collections import deque
 
+# --------------------------------------------- EJERCICIO 1)A)  -------------------------------------------------------------------------
+
 #generacion de eventos usando poisson con adelgazamiento:
 
 def funlanmda (t_actual):
@@ -96,7 +98,7 @@ def simular_sistema_servidores(NumSim):
           
             if len(cola_S1) != 0:
                 i1 = cola_S1.popleft()
-                tiempo_servicio = Generar_Tiempo_Cliente(12)
+                tiempo_servicio = Tiempo_de_Servicio(12)
                 tiempo_S1 = t_actual + tiempo_servicio
 
             else:
@@ -117,7 +119,7 @@ def simular_sistema_servidores(NumSim):
 
             if len(cola_S2) != 0:
                 i2 = cola_S2.popleft()
-                tiempo_servicio = Generar_Tiempo_Cliente(60/7)
+                tiempo_servicio = Tiempo_de_Servicio(60/7)
                 tiempo_S2 = t_actual + tiempo_servicio
 
             else:
@@ -126,6 +128,45 @@ def simular_sistema_servidores(NumSim):
 
             Salidas[clienteSaliente] = t_actual
 
-    return Numero_Arribos, Salidas, Arribos, cola_S1, cola_S2, Clientes_atendidosS1, Clientes_atendidosS2
+    return Numero_Arribos, Salidas, Arribos, Clientes_atendidosS1, Clientes_atendidosS2
 
+# --------------------------------------------------- EJERCICIO 1) B ) --------------------------------------------------------------
+R = 10000
+N = 10000
+
+promedios = []
+prop_s1 = []
+prop_s2 = []
+
+# como los tiempos de clientes no son independientes, realizamos  10mil muestras independientes de 10mil simulaciones cada una.  
+for _ in range(R):
+
+    Numero_Arribos, Salidas, Arribos, Clientes_atendidosS1, Clientes_atendidosS2 = simular_sistema_servidores(N)
+
+    tiempos = []
+
+    for cliente in Arribos:
+        tiempos.append(Salidas[cliente] - Arribos[cliente])
+
+    promedios.append(np.mean(tiempos))
+
+    prop_s1.append(Clientes_atendidosS1 / Numero_Arribos)
+    prop_s2.append(Clientes_atendidosS2 / Numero_Arribos)
+
+media = np.mean(promedios)
+s = np.std(promedios, ddof=1)
+
+error = 1.96 * s / math.sqrt(R)
+
+LI = media - error
+LS = media + error
+
+print("Estimación:", media)
+print("IC95%:", (LI, LS))
+
+media_p1 = np.mean(prop_s1)
+media_p2 = np.mean(prop_s2)
+
+print("Proporción promedio S1:", media_p1)
+print("Proporción promedio S2:", media_p2)
 
