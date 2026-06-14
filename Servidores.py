@@ -51,6 +51,14 @@ def simular_sistema_servidores(NumSim):
     while tiempo_Arribo < math.inf or tiempo_S1 < math.inf or tiempo_S2 < math.inf:
         eventoProximo = min (tiempo_Arribo, tiempo_S1, tiempo_S2)   
 
+         #calculo de area de las colas:
+
+        delta = eventoProximo - tiempo_anterior
+        area_cola1 += len(cola_S1) * delta
+        area_cola2 += len(cola_S2) * delta
+
+        tiempo_anterior = eventoProximo
+
 #Si el evento proximo es el arribo de un cliente:
 
         if tiempo_Arribo == eventoProximo:
@@ -129,7 +137,12 @@ def simular_sistema_servidores(NumSim):
 
             Salidas[clienteSaliente] = t_actual
 
-    return Numero_Arribos, Salidas, Arribos, Clientes_atendidosS1, Clientes_atendidosS2
+    #calculo del promedio de las colas:
+
+    promedio_cola1 = area_cola1 / tiempo_anterior
+    promedio_cola2 = area_cola2 / tiempo_anterior
+
+    return Numero_Arribos, Salidas, Arribos, Clientes_atendidosS1, Clientes_atendidosS2, promedio_cola1, promedio_cola2
 
 # --------------------------------------------------- EJERCICIO 1) B ) --------------------------------------------------------------
 R = 10000
@@ -138,11 +151,13 @@ N = 10000
 promedios = []
 prop_s1 = []
 prop_s2 = []
+promedios_cola1 = []
+promedios_cola2 = []
 
 # como los tiempos de clientes no son independientes, realizamos  10mil muestras independientes de 10mil simulaciones cada una.  
 for _ in range(R):
 
-    Numero_Arribos, Salidas, Arribos, Clientes_atendidosS1, Clientes_atendidosS2 = simular_sistema_servidores(N)
+    Numero_Arribos, Salidas, Arribos, Clientes_atendidosS1, Clientes_atendidosS2, prom_cola1, prom_cola2  = simular_sistema_servidores(N)
 
     tiempos = []
 
@@ -153,6 +168,9 @@ for _ in range(R):
 
     prop_s1.append(Clientes_atendidosS1 / Numero_Arribos)
     prop_s2.append(Clientes_atendidosS2 / Numero_Arribos)
+
+    promedios_cola1.append(prom_cola1)
+    promedios_cola2.append(prom_cola2)
 
 media = np.mean(promedios)
 s = np.std(promedios, ddof=1)
@@ -170,6 +188,12 @@ media_p2 = np.mean(prop_s2)
 
 print("Proporción promedio S1:", media_p1)
 print("Proporción promedio S2:", media_p2)
+
+media_long_cola1 = np.mean(promedios_cola1)
+media_long_cola2 = np.mean(promedios_cola2)
+
+print("Promedio de la longitud de la cola 1:", media_long_cola1)
+print("Promedio de la longitud de la cola 2:", media_long_cola2)
 
 # --------------------------------------------------- EJERCICIO 1) C ) --------------------------------------------------------------
 
