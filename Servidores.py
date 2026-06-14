@@ -197,13 +197,21 @@ print("Promedio de la longitud de la cola 2:", media_long_cola2)
 
 # --------------------------------------------------- EJERCICIO 1) C ) --------------------------------------------------------------
 
-#Grafico del histograma
+#GRAFICO DEL HISTOGRAMA
 
+#Construccion de la lista de tiempos de permanencia de los 10.000 clientes
 tiempo_permanencia = []
 simulaciones = simular_sistema_servidores(10000)
-for  ts, ta in zip(simulaciones[1], simulaciones[2]):
+for  cliente in range(1, simulaciones[0] + 1):
+  ts = simulaciones[1][cliente]
+  ta = simulaciones[2][cliente]
   tiempo_permanencia.append(ts- ta)
 
+#Media y Varianza de los tiempos de permanencia de los clientes
+m_est = np.mean(tiempo_permanencia)
+var_est = np.var(tiempo_permanencia, ddof=1)
+
+#Grafico del histograma
 fig, ax = plt.subplots()
 ax.hist(tiempo_permanencia, bins=50, color='m', edgecolor='black', alpha=0.7)
 plt.title("Histograma de tiempos de permanencia")
@@ -216,12 +224,10 @@ frecuencias_obs, extremos = np.histogram(tiempo_permanencia, bins=5)
 
 #GAMMA:
 #Estimacion de parametros alfa y beta a partir de la muestra de datos
-m_est = np.mean(tiempo_permanencia)
-var_est = np.var(tiempo_permanencia, ddof=1)
 alfa_est = m_est**2 / var_est
 beta_est = var_est / m_est
 
-#Calculo de las probabilidades teoricas
+#Calculo de las probabilidades teoricas estimadas
 probs_est = []
 for i in range(len(frecuencias_obs)):
   prob_i_est = stats.gamma.cdf(extremos[i+1], a=alfa_est, scale=beta_est) - stats.gamma.cdf(extremos[i], a=alfa_est, scale=beta_est)
@@ -232,12 +238,12 @@ Ni_obs = [val for val in frecuencias_obs]
 
 #Construccion del estadistico T
 n = len(tiempo_permanencia)
-T = 0
+T_G = 0
 for i in range(len(Ni_obs)):
-  T += ((Ni_obs[i] - n*probs_est[i])**2) / (n*probs_est[i])
+  T_G += ((Ni_obs[i] - n*probs_est[i])**2) / (n*probs_est[i])
     
 #Calculo del p-valor usando simulaciones
-p_valor = 0
+p_valor_G = 0
 for sim in range(1000):
   muestra_sim = np.random.gamma(alfa_est, beta_est, size=10000)
   m = len(muestra_sim)
@@ -256,19 +262,18 @@ for sim in range(1000):
   
   Ni_sim = [val for val in frecuencias_sim]
 
-  T_sim = 0
+  T_Gsim = 0
   for i in range(len(Ni_sim)):
-    T_sim += ((Ni_sim[i] - m*probs_sim[i])**2) / (m*probs_sim[i])
-  if T_sim > T:
-    p_valor += 1
-print(f"El p-valor es: {p_valor/1000}")
+    T_Gsim += ((Ni_sim[i] - m*probs_sim[i])**2) / (m*probs_sim[i])
+  if T_Gsim > T_G:
+    p_valor_G += 1
+print(f"El p-valor es: {p_valor_G/10000}")
 
 #EXPONENCIAL
 #Estimacion del parametro lambda
-m_est = np.mean(tiempo_permanencia)
 lambda_est = 1/m_est
 
-#Calculo de probabilidades
+#Calculo de las probabilidades teoricas estimadas
 probs_est = []
 for i in range(len(frecuencias_obs)):
   prob_i_est = stats.expon.cdf(extremos[i+1], scale=1/lambda_est) - stats.expon.cdf(extremos[i], scale=1/lambda_est)
@@ -278,13 +283,13 @@ for i in range(len(frecuencias_obs)):
 Ni_obs = [val for val in frecuencias_obs]
 
 #Estadistico T
-T = 0
+T_E = 0
 for i in range(len(Ni_obs)):
-  T += ((Ni_obs[i] - len(tiempo_permanencia)*probs_est[i])**2) / (len(tiempo_permanencia)*probs_est[i])
+  T_E += ((Ni_obs[i] - len(tiempo_permanencia)*probs_est[i])**2) / (len(tiempo_permanencia)*probs_est[i])
 print(T)
 
 #Calculo del p-valor con simulaciones
-p_valor = 0
+p_valor_E = 0
 for sim in range(10000):
   muestra_sim = np.random.exponential(scale=1/lambda_est, size=10000)
   lamda_sim = 1/np.mean(muestra_sim)
@@ -297,12 +302,12 @@ for sim in range(10000):
   
   Ni_sim = [val for val in frecuencias_sim]
 
-  T_sim = 0
+  T_Esim = 0
   for i in range(len(Ni_sim)):
-    T_sim += ((Ni_sim[i]-m*probs_sim[i])**2) / (m*probs_sim[i])
+    T_Esim += ((Ni_sim[i]-m*probs_sim[i])**2) / (m*probs_sim[i])
   
-  if T_sim > T:
-    p_valor += 1
+  if T_Esim > T_E:
+    p_valor_E += 1
 
-print(f"El p-valor es: {p_valor/10000}")
+print(f"El p-valor es: {p_valor_E/10000}")
 
